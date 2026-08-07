@@ -1,27 +1,14 @@
 import { chunkById, condition, results } from "@/lib/data"
 import type { Condition, ModelMetrics, Tier } from "@/types"
 
-export type ViewKey = "overall" | "cross_lingual"
-
 /**
- * The two ways to read this benchmark. Neither pools anything — a view is just
- * the set of conditions shown side by side, so every rendered number stays a
- * real single-condition measurement.
- *
- * `par_en_en` is deliberately absent from `overall`: its 40 queries are a strict
- * subset of `full_en`'s 120, so showing both would put the same queries on
- * screen twice at two different pool sizes. Each view carries exactly one
- * EN -> EN condition, whichever pool suits its purpose.
+ * The conditions shown on the main page, side by side. Nothing is pooled — each
+ * stays a real single-condition measurement.
  */
-const VIEWS: Record<ViewKey, { conditions: string[] }> = {
-  overall: { conditions: ["full_en", "par_ko_ko", "par_en_ko", "par_ko_en"] },
-  cross_lingual: {
-    conditions: ["par_en_en", "par_ko_ko", "par_en_ko", "par_ko_en"],
-  },
-}
+const PAGE_CONDITIONS = ["full_en", "par_ko_ko", "par_en_ko", "par_ko_en"]
 
-export function viewConditions(view: ViewKey): Condition[] {
-  return VIEWS[view].conditions.map(condition)
+export function pageConditions(): Condition[] {
+  return PAGE_CONDITIONS.map(condition)
 }
 
 /** "EN → EN", derived from the condition rather than hardcoded per key. */
@@ -81,12 +68,12 @@ export function byDimension(
 }
 
 /**
- * Only the 40 parallel chunks were hand-annotated for identifiers; the other 80
- * carry `identifiers: null` in the corpus. The per-query records flatten that
- * null to `[]`, which makes an unannotated chunk indistinguishable from a
- * genuinely prose-only one — so annotation status has to be read from the
- * corpus, not from the query. Getting this wrong silently folds 80 unannotated
- * queries into "prose only" and inflates it.
+ * Chunks not hand-annotated for identifiers carry `identifiers: null` in the
+ * corpus. The per-query records flatten that null to `[]`, which makes an
+ * unannotated chunk indistinguishable from a genuinely prose-only one — so
+ * annotation status has to be read from the corpus, not from the query.
+ * Getting this wrong silently folds unannotated queries into "prose only" and
+ * inflates it.
  */
 export function isAnnotated(queryId: string) {
   return chunkById(queryId)?.identifiers != null

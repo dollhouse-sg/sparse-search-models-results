@@ -79,7 +79,6 @@ export interface CorpusChunk {
   text_ko: string | null
   query_ko: string | null
   identifiers: string[] | null
-  parallel: boolean
 }
 
 export interface ResultsPayload {

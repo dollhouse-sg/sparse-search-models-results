@@ -9,7 +9,6 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { CrossLingual } from "@/pages/CrossLingual"
 import { Overall } from "@/pages/Overall"
 import { Queries } from "@/pages/Queries"
 import { useModelFilter } from "@/components/model-filter"
@@ -39,15 +38,11 @@ export function App() {
         <Tabs defaultValue="overall" className="gap-5">
           <TabsList>
             <TabsTrigger value="overall">Overall</TabsTrigger>
-            <TabsTrigger value="cross">Cross-lingual</TabsTrigger>
             <TabsTrigger value="queries">Queries</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overall">
             <Overall />
-          </TabsContent>
-          <TabsContent value="cross">
-            <CrossLingual />
           </TabsContent>
           <TabsContent value="queries">
             <Queries />
