@@ -6,7 +6,9 @@ import { DataGrid, HeatCell } from "@/components/grids/DataGrid"
 import { HeatLegend } from "@/components/grids/HeatLegend"
 import { MetricsTable } from "@/components/MetricsTable"
 import { ModelCard } from "@/components/ModelCard"
+import { NoModels } from "@/components/NoModels"
 import { SummaryTable } from "@/components/SummaryTable"
+import { useVisibleModels } from "@/components/model-filter"
 import { results, shortLabel } from "@/lib/data"
 import { byDimension, byIdentifier, TIER_ORDER_TYPED } from "@/lib/views"
 import { DirectionLabel } from "@/components/DirectionLabel"
@@ -21,7 +23,7 @@ const K_VALUES = [1, 3, 5, 10] as const
  * control anywhere below that changes it.
  */
 export function BenchmarkPage({ conditions }: { conditions: Condition[] }) {
-  const models = results.models.filter((m) => !m.error)
+  const models = useVisibleModels()
   const modelRows = models.map((m) => ({
     key: m.key,
     label: shortLabel(m.key, m.label),
@@ -40,7 +42,14 @@ export function BenchmarkPage({ conditions }: { conditions: Condition[] }) {
     span: K_VALUES.length,
   }))
 
-  const vendors = byDimension(conditions[0].key, models[0].key, "vendor")
+  // Only the group names are read, so any model gives the same answer.
+  const vendors = byDimension(
+    conditions[0].key,
+    results.models[0].key,
+    "vendor"
+  )
+
+  if (models.length === 0) return <NoModels />
 
   return (
     <div className="flex flex-col gap-5">

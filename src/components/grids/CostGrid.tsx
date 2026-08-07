@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataGrid, ValueCell } from "@/components/grids/DataGrid"
-import { results, shortLabel } from "@/lib/data"
+import { useVisibleModels } from "@/components/model-filter"
+import { shortLabel } from "@/lib/data"
 import { costRange, fmtMetric } from "@/lib/views"
 import { modelColor } from "@/lib/viz"
 import type { Condition } from "@/types"
@@ -14,7 +15,7 @@ import type { Condition } from "@/types"
  * model dialog.
  */
 export function CostGrid({ conditions }: { conditions: Condition[] }) {
-  const models = results.models.filter((m) => !m.error)
+  const models = useVisibleModels()
   const rows = models.map((m) => ({
     key: m.key,
     label: shortLabel(m.key, m.label),

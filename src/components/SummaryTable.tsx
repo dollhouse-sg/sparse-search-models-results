@@ -2,19 +2,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { HeaderLabel } from "@/components/HeaderLabel"
 import { DirectionLabel } from "@/components/DirectionLabel"
 import { HeatLegend } from "@/components/grids/HeatLegend"
+import { useVisibleModels } from "@/components/model-filter"
 import { summaryRows } from "@/lib/views"
 import { heatStyle, modelColor } from "@/lib/viz"
 import type { Condition } from "@/types"
 
 /**
- * Top-of-page comparison: one row per model, ranked by pooled hit@5.
+ * Top-of-page comparison: one row per model, in the same order as every grid
+ * below it, with the pooled hit@5 standing in the leading column.
  *
  * The best value in each column keeps full-strength ink; everything else is
  * dulled. "Best" is not always the maximum: latency, model size and index
  * footprint are costs, so their winner is the minimum. Ties all win.
  */
 export function SummaryTable({ conditions }: { conditions: Condition[] }) {
-  const rows = summaryRows(conditions)
+  const models = useVisibleModels()
+  const rows = summaryRows(conditions, models)
 
   // Column extremes, with the direction each metric is good in.
   const bestOf = (
@@ -93,13 +96,13 @@ export function SummaryTable({ conditions }: { conditions: Condition[] }) {
             </thead>
 
             <tbody>
-              {rows.map((r, i) => (
+              {rows.map((r) => (
                 <tr
                   key={r.meta.key}
                   className="border-b last:border-0 hover:bg-muted/40"
                 >
                   <td className="py-1.5 text-center text-[11px] text-muted-foreground tabular-nums">
-                    {i + 1}
+                    {r.rank}
                   </td>
                   <td className="py-1.5 pl-1">
                     <div className="flex min-w-0 items-center gap-2">

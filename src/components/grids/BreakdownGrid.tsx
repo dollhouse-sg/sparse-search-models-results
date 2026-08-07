@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataGrid, HeatCell } from "@/components/grids/DataGrid"
 import { HeatLegend } from "@/components/grids/HeatLegend"
 import { DirectionLabel } from "@/components/DirectionLabel"
-import { results, shortLabel } from "@/lib/data"
+import { useVisibleModels } from "@/components/model-filter"
+import { shortLabel } from "@/lib/data"
 import { modelColor } from "@/lib/viz"
 import type { Condition } from "@/types"
 
@@ -30,7 +31,7 @@ export function BreakdownGrid({
   labelWidth?: string
   minWidth?: string
 }) {
-  const models = results.models.filter((m) => !m.error)
+  const models = useVisibleModels()
   const rows = models.map((m) => ({
     key: m.key,
     label: shortLabel(m.key, m.label),

@@ -1,5 +1,6 @@
-import { CpuIcon } from "lucide-react"
+import { CpuIcon, XIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   HoverCard,
   HoverCardContent,
@@ -11,8 +12,10 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { CrossLingual } from "@/pages/CrossLingual"
 import { Overall } from "@/pages/Overall"
 import { Queries } from "@/pages/Queries"
+import { useModelFilter } from "@/components/model-filter"
 import { results, shortLabel } from "@/lib/data"
 import { modelColor } from "@/lib/viz"
+import { cn } from "@/lib/utils"
 
 export function App() {
   const generated = new Date(results.generated_at)
@@ -28,23 +31,7 @@ export function App() {
             <MachineBadge />
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {results.models.map((m) => (
-              <Badge
-                key={m.key}
-                variant={m.error ? "destructive" : "outline"}
-                className="gap-1.5 font-normal"
-              >
-                <span
-                  aria-hidden
-                  className="size-2 shrink-0 rounded-full"
-                  style={{ background: modelColor(m.key) }}
-                />
-                {shortLabel(m.key, m.label)}
-                {m.error ? " (failed)" : ""}
-              </Badge>
-            ))}
-          </div>
+          <ModelLegend />
         </header>
 
         <Separator />
@@ -74,6 +61,62 @@ export function App() {
         </footer>
       </div>
     </TooltipProvider>
+  )
+}
+
+/**
+ * Legend and model filter in one: the swatch that names a model is also the
+ * switch that removes it from every table on every tab.
+ */
+function ModelLegend() {
+  const { hidden, toggle, showAll } = useModelFilter()
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {results.models.map((m) => {
+        if (m.error) {
+          return (
+            <Badge key={m.key} variant="destructive" className="font-normal">
+              {shortLabel(m.key, m.label)} (failed)
+            </Badge>
+          )
+        }
+
+        const off = hidden.has(m.key)
+        return (
+          <Badge
+            key={m.key}
+            variant="outline"
+            className={cn(
+              "cursor-pointer gap-1.5 font-normal transition-opacity hover:bg-muted",
+              off && "text-muted-foreground line-through opacity-50"
+            )}
+            render={
+              <button
+                type="button"
+                aria-pressed={!off}
+                title={`${off ? "Show" : "Hide"} ${m.label}`}
+                onClick={() => toggle(m.key)}
+              />
+            }
+          >
+            <span
+              aria-hidden
+              className="size-2 shrink-0 rounded-full"
+              style={{ background: off ? "currentColor" : modelColor(m.key) }}
+            />
+            {shortLabel(m.key, m.label)}
+          </Badge>
+        )
+      })}
+
+      {hidden.size > 0 && (
+        <Button variant="ghost" size="sm" onClick={showAll}>
+          <XIcon data-icon="inline-start" />
+          Show all
+        </Button>
+      )}
+    </div>
   )
 }
 

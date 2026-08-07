@@ -10,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { results, shortLabel } from "@/lib/data"
+import { useVisibleModels } from "@/components/model-filter"
+import { shortLabel } from "@/lib/data"
 import { fmtMetric, METRIC_FIELDS, metricValue } from "@/lib/views"
 import { DirectionLabel } from "@/components/DirectionLabel"
 import { HeaderLabel } from "@/components/HeaderLabel"
@@ -24,6 +25,7 @@ import type { Condition } from "@/types"
  * and the exhaustive readout the charts summarise.
  */
 export function MetricsTable({ conditions }: { conditions: Condition[] }) {
+  const models = useVisibleModels()
   const [sort, setSort] = useState<{ key: string; asc: boolean }>({
     key: "hit@5",
     asc: false,
@@ -31,8 +33,8 @@ export function MetricsTable({ conditions }: { conditions: Condition[] }) {
 
   const rows = useMemo(() => {
     const out = conditions.flatMap((c) =>
-      results.models
-        .filter((m) => !m.error && c.metrics[m.key] && !c.metrics[m.key].error)
+      models
+        .filter((m) => c.metrics[m.key] && !c.metrics[m.key].error)
         .map((m) => ({ cond: c, meta: m, metrics: c.metrics[m.key] }))
     )
     return out.sort((a, b) => {
@@ -42,7 +44,7 @@ export function MetricsTable({ conditions }: { conditions: Condition[] }) {
       if (bv == null) return -1
       return sort.asc ? av - bv : bv - av
     })
-  }, [conditions, sort])
+  }, [conditions, models, sort])
 
   return (
     <Card>

@@ -24,16 +24,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { NoModels } from "@/components/NoModels"
 import { RankChip } from "@/components/RankChip"
-import { QueryDetailDialog, type Row } from "@/components/QueryDetailDialog"
 import { fmtPct, results, shortLabel } from "@/lib/data"
+import { useVisibleModels } from "@/components/model-filter"
 import { DirectionLabel } from "@/components/DirectionLabel"
 import { directionLabel } from "@/lib/views"
 import { modelColor, TIER_COLOR } from "@/lib/viz"
-import type { Tier } from "@/types"
+import type { Condition, QueryResult, Tier } from "@/types"
 import { cn } from "@/lib/utils"
 
 const TIERS: Tier[] = ["easy", "medium", "hard"]
+
+type Row = { cond: Condition; query: QueryResult }
 
 /**
  * The raw browser: every query run in the file. Controls live in the column
@@ -41,19 +44,21 @@ const TIERS: Tier[] = ["easy", "medium", "hard"]
  */
 export function Queries() {
   const conds = results.conditions
-  const models = results.models.filter((m) => !m.error)
+  const models = useVisibleModels()
 
   const [direction, setDirection] = useState("all")
   const [tier, setTier] = useState("all")
   const [q, setQ] = useState("")
   const [sortModel, setSortModel] = useState<string | null>(null)
-  const [active, setActive] = useState<Row | null>(null)
 
   const all: Row[] = useMemo(
     () =>
       conds.flatMap((cond) => cond.queries.map((query) => ({ cond, query }))),
     [conds]
   )
+
+  // A hidden model must not keep sorting from a column that is no longer there.
+  const sortBy = models.some((m) => m.key === sortModel) ? sortModel : null
 
   const rows = useMemo(() => {
     const filtered = all.filter(({ cond, query }) => {
@@ -63,14 +68,14 @@ export function Queries() {
         return false
       return true
     })
-    if (!sortModel) return filtered
+    if (!sortBy) return filtered
     // Worst first — the interesting rows are the ones a model missed.
     return [...filtered].sort((a, b) => {
-      const ar = a.query.per_model[sortModel]?.rank ?? Infinity
-      const br = b.query.per_model[sortModel]?.rank ?? Infinity
+      const ar = a.query.per_model[sortBy]?.rank ?? Infinity
+      const br = b.query.per_model[sortBy]?.rank ?? Infinity
       return br - ar
     })
-  }, [all, direction, tier, q, sortModel])
+  }, [all, direction, tier, q, sortBy])
 
   const hitRate = useMemo(
     () =>
@@ -88,13 +93,15 @@ export function Queries() {
 
   const activeCond = conds.find((c) => c.key === direction)
 
+  if (models.length === 0) return <NoModels />
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs text-muted-foreground tabular-nums">
           {rows.length} of {all.length} query runs
         </span>
-        {(direction !== "all" || tier !== "all" || q || sortModel) && (
+        {(direction !== "all" || tier !== "all" || q || sortBy) && (
           <Button
             variant="ghost"
             size="sm"
@@ -170,7 +177,7 @@ export function Queries() {
                     }
                     className={cn(
                       "inline-flex w-full items-center justify-center gap-1 rounded-md px-1 py-1 text-[11px] whitespace-nowrap transition-colors hover:bg-accent",
-                      sortModel === m.key && "bg-accent font-semibold"
+                      sortBy === m.key && "bg-accent font-semibold"
                     )}
                   >
                     <span
@@ -206,11 +213,7 @@ export function Queries() {
               </TableRow>
             ) : (
               rows.map((row) => (
-                <TableRow
-                  key={`${row.cond.key}-${row.query.id}`}
-                  className="cursor-pointer"
-                  onClick={() => setActive(row)}
-                >
+                <TableRow key={`${row.cond.key}-${row.query.id}`}>
                   <TableCell className="text-xs whitespace-nowrap">
                     <DirectionLabel cond={row.cond} withHint={false} />
                   </TableCell>
@@ -259,11 +262,6 @@ export function Queries() {
           </TableBody>
         </Table>
       </div>
-
-      <QueryDetailDialog
-        row={active}
-        onOpenChange={(open) => !open && setActive(null)}
-      />
     </div>
   )
 }

@@ -153,6 +153,8 @@ export function costRange(conditions: Condition[], modelKey: string) {
 
 export interface SummaryRow {
   meta: (typeof results.models)[number]
+  /** 1-based standing by pooled hit@5, carried as a column rather than as row order. */
+  rank: number
   /** Rate over every query run on the page, weighted by each condition's size. */
   hit1: number
   hit5: number
@@ -165,7 +167,11 @@ export interface SummaryRow {
 }
 
 /**
- * One row per model for the top-of-page comparison.
+ * One row per model for the top-of-page comparison, in corpus order.
+ *
+ * Ordering by score would put the same six models in a different sequence here
+ * than in every grid below, so the standing is reported as a `rank` column and
+ * row order stays the one the rest of the page uses.
  *
  * The pooled rates are weighted by query count across exactly the conditions on
  * the page — on Overall that is all 240 runs covering all 120 corpus queries.
@@ -174,8 +180,11 @@ export interface SummaryRow {
  * alongside rather than replaced: a single number cannot show that a model sits
  * at 98% in one direction and 40% in another.
  */
-export function summaryRows(conditions: Condition[]): SummaryRow[] {
-  const rows = results.models
+export function summaryRows(
+  conditions: Condition[],
+  models: (typeof results.models)[number][]
+): SummaryRow[] {
+  const rows = models
     .filter(
       (m) =>
         !m.error &&
@@ -210,7 +219,12 @@ export function summaryRows(conditions: Condition[]): SummaryRow[] {
       }
     })
 
-  return rows.sort((a, b) => b.hit5 - a.hit5)
+  // Standing by pooled hit@5, ties sharing a number.
+  const byHit5 = [...rows].sort((a, b) => b.hit5 - a.hit5)
+  return rows.map((r) => ({
+    ...r,
+    rank: byHit5.findIndex((x) => x.hit5 === r.hit5) + 1,
+  }))
 }
 
 type Span = { min: number; max: number } | null
